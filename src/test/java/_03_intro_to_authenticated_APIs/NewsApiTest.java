@@ -11,6 +11,8 @@ import org.springframework.web.reactive.function.client.WebClient.RequestHeaders
 import org.springframework.web.reactive.function.client.WebClient.RequestHeadersUriSpec;
 import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
 import org.springframework.web.util.UriBuilder;
+
+import _01_intro_to_APIs.data_transfer_objects.Result;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
@@ -22,33 +24,80 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-
 class NewsApiTest {
 
-    NewsApi newsApi;
+	NewsApi newsApi;
 
-    @BeforeEach
-    void setUp() {
+	@Mock
+	WebClient webClientMock;
 
-    }
+	@Mock
+	WebClient.ResponseSpec responseSpecMock;
 
-    @Test
-    void itShouldGetNewsStoryByTopic() {
-        //given
+	@Mock
+	WebClient.RequestHeadersUriSpec requestHeadersUriSpecMock;
 
-        //when
+	@Mock
+	WebClient.RequestHeadersSpec requestHeadersSpecMock;
 
-        //then
-    }
+	@Mock
+	Mono resultMonoMock;
 
-    @Test
-    void itShouldFindStory(){
-        //given
+	@Mock
+	ApiExampleWrapper wrapper;
 
-        //when
+	@Mock
+	Article[] articles;
+	
+	@BeforeEach
+	void setUp() {
+		MockitoAnnotations.openMocks(this);
 
-        //then
-    }
+		newsApi = new NewsApi();
+		newsApi.setWebClient(webClientMock);
+	}
 
+	@Test
+	void itShouldGetNewsStoryByTopic() {
+		// given
+		String topic = "grass";
+		List<Article> expected = Collections.singletonList(new Article());
+		// when
+		when(webClientMock.get()).thenReturn(requestHeadersUriSpecMock);
+		when(requestHeadersUriSpecMock.uri((Function<UriBuilder, URI>) any())).thenReturn(requestHeadersSpecMock);
+		when(requestHeadersSpecMock.retrieve()).thenReturn(responseSpecMock);
+		when(responseSpecMock.bodyToMono(ApiExampleWrapper.class)).thenReturn(resultMonoMock);
+		when(resultMonoMock.block()).thenReturn(wrapper);
+		when(wrapper.getArticles()).thenReturn(expected);
+
+		List<Article> actualNews = newsApi.getNewsStoryByTopic(topic).getArticles();
+
+		// then
+		verify(webClientMock, times(1)).get();
+		assertEquals(expected, actualNews);
+	}
+
+	@Test
+	void itShouldFindStory() {
+		// given
+		String topic = "grass";
+		List<Article> expected = Collections.singletonList(new Article());
+		// when
+		when(webClientMock.get()).thenReturn(requestHeadersUriSpecMock);
+		when(requestHeadersUriSpecMock.uri((Function<UriBuilder, URI>) any())).thenReturn(requestHeadersSpecMock);
+		when(requestHeadersSpecMock.retrieve()).thenReturn(responseSpecMock);
+		when(responseSpecMock.bodyToMono(ApiExampleWrapper.class)).thenReturn(resultMonoMock);
+		when(resultMonoMock.block()).thenReturn(wrapper);
+		when(wrapper.getArticles()).thenReturn(expected);
+		String expectedArticle = "Ghost of Tsushima’s purring cats might be my favorite PS5 feature -\n"
+				+ "The new directors cut adds a lot of great stuff including kitties\n"
+				+ "Since the PlayStation 5 debuted, weve seen lots of novel uses of its DualSense controller. Game developers have utilized the haptic … [+3920 chars]\n"
+				+ "Full article: https://www.theverge.com/22631060/ghost-of-tsushima-directors-cut-ps5-cats-dualsense-controller\n";
+		String story = newsApi.findStory(topic);
+		// then
+		System.out.println(story);
+		verify(webClientMock, times(1)).get();
+		assertEquals(expectedArticle, story);
+	}
 
 }

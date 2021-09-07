@@ -13,40 +13,63 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
+import java.util.List;
+import java.util.Collections;
+
 class MyDonutShopTest {
 
-    MyDonutShop myDonutShop;
+	MyDonutShop myDonutShop;
 
-    @BeforeEach
-    void setUp() {
+	@Mock
+	PaymentService paymentService;
 
-    }
+	@Mock
+	DeliveryService deliveryService;
 
-    @Test
-    void itShouldTakeDeliveryOrder() throws Exception {
-        //given
+	@Mock
+	BakeryService bakeryService;
 
-        //when
+	@BeforeEach
+	void setUp() {
+		MockitoAnnotations.openMocks(this);
+		myDonutShop = new MyDonutShop(paymentService, deliveryService, bakeryService);
+	}
 
-        //then
-    }
+	@Test
+	void itShouldTakeDeliveryOrder() throws Exception {
 
-    @Test
-    void givenInsufficientDonutsRemaining_whenTakeOrder_thenThrowIllegalArgumentException() {
-        //given
+		myDonutShop.openForTheDay();
+		// given
+		Order order = new Order("name", "number", 1, 10d, "credit card", true);
+		// when
+		when(paymentService.charge(order)).thenReturn(true);
 
-        //when
+		// then
+		assertThrows(IllegalArgumentException.class, () -> myDonutShop.takeOrder(order));
+		verify(bakeryService, never()).removeDonuts(1);
+	}
 
-        //then
-    }
+	@Test
+	void givenInsufficientDonutsRemaining_whenTakeOrder_thenThrowIllegalArgumentException() {
 
-    @Test
-    void givenNotOpenForBusiness_whenTakeOrder_thenThrowIllegalStateException(){
-        //given
+		myDonutShop.openForTheDay();
+		// given
+		Order order = new Order("name", "number", 1, 10d, "credit card", true);
+		// when
+		when(paymentService.charge(order)).thenReturn(true);
 
-        //when
+		// then
+		Throwable throwed = assertThrows(IllegalArgumentException.class, () -> myDonutShop.takeOrder(order));
+		verify(bakeryService, never()).removeDonuts(1);
+	}
 
-        //then
-    }
+	@Test
+	void givenNotOpenForBusiness_whenTakeOrder_thenThrowIllegalStateException() {
+		Order order = new Order("name", "number", 1, 10d, "credit card", true);
+
+		// then
+		Throwable throwed = assertThrows(IllegalStateException.class, () -> myDonutShop.takeOrder(order));
+		verify(bakeryService, never()).removeDonuts(1);
+	}
 
 }
